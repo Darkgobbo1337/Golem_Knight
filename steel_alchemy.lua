@@ -56,14 +56,80 @@ newTalent[
 newTalent[ 
 	name = "Thorn Spikes",
 	type = {"spell/steel-alchemy", 3},
-	Use mode = "sustained"
-	Mana Cost: 25
-	Cooldown: 15
-	Use Speed: Spell
+	mode = "sustained",
+	require = spells_req3
+	sustain_mana = 25,
+	points = 5,
+	cooldown = 15,
+	tactical = { BUFF =2, DEFEND = 2 },
+	getDamageOnMeleeHit = function(self, t) return self:combatTalentSpellDamage(t, 1, 150, getcombatSpellpower(self, t)) end,
+	
+	activate = function(self, t)
+        local power = t.getArmor(self, t)
+        self.carbon_armor = power
+        game:playSoundNear(self, "talents/spell_generic")
+        return {
+            armor = self:addTemporaryValue("carbon_spikes", power),
+            onhit = self:addTemporaryValue("on_melee_hit", {[DamageType.PHYSICALBLEED]=t.getDamageOnMeleeHit(self, t)}),            
+        	}
+    	end,
 	Your gems in your armor become spikes that gouge and tear your opponents when they strike you. When hit in melee combat you deal (5-50) damage back to your attacker in the form of physical bleed damage.
 	The damage increases with your Spellpower.
 
 ]
+
+-- Carbon spikes
+newTalent{
+    name = "Carbon Spikes",
+    type = {"chronomancy/other", 1},
+    no_sustain_autoreset = true,
+    points = 5,
+    mode = "sustained",
+    sustain_paradox = 20,
+    cooldown = 12,
+    
+    getDamageOnMeleeHit = function(self, t) return self:combatTalentSpellDamage(t, 1, 150, getParadoxSpellpower(self, t)) end,
+    getArmor = function(self, t) return math.ceil(self:combatTalentSpellDamage(t, 20, 50, getParadoxSpellpower(self, t))) end,
+    callbackOnActBase = function(self, t)
+        local maxspikes = t.getArmor(self, t)
+        if self.carbon_armor < maxspikes then
+            self.carbon_armor = self.carbon_armor + 1
+        end
+    end,
+    do_carbonLoss = function(self, t)
+        if self.carbon_armor >= 1 then
+            self.carbon_armor = self.carbon_armor - 1
+        else
+            -- Deactivate without loosing energy
+            self:forceUseTalent(self.T_CARBON_SPIKES, {ignore_energy=true})
+        end
+    end,
+    activate = function(self, t)
+        local power = t.getArmor(self, t)
+        self.carbon_armor = power
+        game:playSoundNear(self, "talents/spell_generic")
+        return {
+            armor = self:addTemporaryValue("carbon_spikes", power),
+            onhit = self:addTemporaryValue("on_melee_hit", {[DamageType.BLEED]=t.getDamageOnMeleeHit(self, t)}),            
+        }
+    end,
+    deactivate = function(self, t, p)
+        self:removeTemporaryValue("carbon_spikes", p.armor)
+        self:removeTemporaryValue("on_melee_hit", p.onhit)
+        self.carbon_armor = nil
+        return true
+    end,
+    info = function(self, t)
+        local damage = t.getDamageOnMeleeHit(self, t)
+        local armor = t.getArmor(self, t)
+        return ([[Fragile spikes of carbon protrude from your flesh, clothing, and armor, increasing your armor rating by %d and inflicting %0.2f bleed damage over six turns on attackers.   Each time you're struck, the armor increase will be reduced by 1.  Each turn the spell will regenerate 1 armor up to its starting value.
+        If the armor increase from the spell ever falls below 1, the sustain will deactivate and the effect will end.
+        The armor and bleed damage will increase with your Spellpower.]]):
+        tformat(armor, damDesc(self, DamageType.PHYSICAL, damage))
+    end,
+}
+
+
 newTalent[
 	name = "Warden Form",
 	type = {"spell/steel-alchemy", 4},
