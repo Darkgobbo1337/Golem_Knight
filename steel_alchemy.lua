@@ -8,36 +8,41 @@ newTalent{
 	cooldown = 8,
 	tactical = { BUFF = 2 },
 	getIncrease = function(self, t) return self:combatTalentScale(t, 0.05, 0.25) * 100 end,
-    	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 5, 30) end,
+    	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 15, 30) end,
+	infusion = function(self, t) return DamageType.PHYS_OFF, "physical_offbalance" end
 	sustain_slots = 'alchemy_infusion',
+	is_infusion = true,
 	activate = function(self, t)
 		game:playSoundNear(self, "talents/arcane")
 		local ret = {}
-        local pen = {}
-		self:talentTemporaryValue(ret, "inc_damage", {[DamageType.PHYSICAL] = t.getIncrease(self, t)}),
-        	self:talentTemporaryValue(pen, "resists_pen", {[DamageType.PHYSICAL] = t.getResistPenalty(self, t)})
+        		self:talentTemporaryValue(ret, "inc_damage", {[DamageType.PHYSICAL] = t.getIncrease(self, t)}),
+		if self:getTalentLevel(t) >= 3 then
+        		self:talentTemporaryValue(ret, "resists_pen", {[DamageType.PHYSICAL] = t.getResistPenalty(self, t)})
+		end
 		return ret
+		local function activate_infusion(self, btid)
+			for tid, lev in pairs(self.talents) do
+				if tid ~= btid and self.talents_def[tid].is_infusion and (not self.talents_cd[tid] or self.talents_cd[tid] < 3) then 
+					self.talents_cd[tid] = 3
+				end
+			end
+		end
 	end,
 	deactivate = function(self, t, p)
 		return true
 	end,
 	info = function(self, t)
 		local daminc = t.getIncrease(self, t)
-        local phypen = t.getResistPenalty(self, t)
+        	local phypen = t.getResistPenalty(self, t)
 		return ([[When you use your abilities, you infuse them with physical damage that throws your foe off-balance.
                 You increase your Physical damage by %d%%. At rank 3 and higher you increase your Physical resistance penetration by %d%%.
                 You cannot have more than one alchemist infusion sustain active at once. 
-                Switching to another infusion is an instant but puts the others on a short 3 turn cooldown.]]):
+                Switching to another infusion is instant but puts the others on a short 3 turn cooldown.]]):
 		tformat(daminc,physpen)
 	end,
 }
 
-
-                When you use your abilities, you infuse them with physical damage that throws your foe off-balance.
-                You increase your Physical damage by %d%%. At rank 3 and higher you increase your Physical resistance penetration by %d%%.
-                You cannot have more than one alchemist infusion sustain active at once.
-
-
+                
 
 newTalent[
 	name = "Gem Boulder",
