@@ -1,3 +1,46 @@
+newTalent{
+	name = "Disease Infusion",
+	type = {"spell/disease-alchemy", 1},
+	mode = "sustained",
+	require = spells_req1,
+	sustain_mana = 20,
+	points = 5,
+	cooldown = 8,
+	tactical = { BUFF = 2 },
+	getIncrease = function(self, t) return self:combatTalentScale(t, 0.05, 0.25) * 100 end,
+    	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 15, 30) end,
+	infusion = function(self, t) return DamageType.BLIGHT_DISEASE, "blight_disease" end
+	sustain_slots = 'alchemy_infusion',
+	is_infusion = true,
+	activate = function(self, t)
+		game:playSoundNear(self, "talents/arcane")
+		local ret = {}
+        		self:talentTemporaryValue(ret, "inc_damage", {[DamageType.BLIGHT] = t.getIncrease(self, t)}),
+		if self:getTalentLevel(t) >= 3 then
+        		self:talentTemporaryValue(ret, "resists_pen", {[DamageType.BLIGHT] = t.getResistPenalty(self, t)})
+		end
+		return ret
+		local function activate_infusion(self, btid)
+			for tid, lev in pairs(self.talents) do
+				if tid ~= btid and self.talents_def[tid].is_infusion and (not self.talents_cd[tid] or self.talents_cd[tid] < 3) then 
+					self.talents_cd[tid] = 3
+				end
+			end
+		end
+	end,
+	deactivate = function(self, t, p)
+		return true
+	end,
+	info = function(self, t)
+		local daminc = t.getIncrease(self, t)
+        	local pen = t.getResistPenalty(self, t)
+		return ([[When you use your abilities, you infuse them with light damage that diseases your foe.
+                You increase your Blight damage by %d%%. At rank 3 and higher you increase your Blight resistance penetration by %d%%.
+                You cannot have more than one alchemist infusion sustain active at once. 
+                Switching to another infusion is instant but puts the others on a short 3 turn cooldown.]]):
+		tformat(daminc,pen)
+	end,
+}
 Disease Infusion 
 Use mode: Sustained
 Mana Cost: 20
