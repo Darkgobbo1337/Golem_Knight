@@ -9,7 +9,7 @@ newTalent{
 	tactical = { BUFF = 2 },
 	getIncrease = function(self, t) return self:combatTalentScale(t, 0.05, 0.25) * 100 end,
     	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 15, 30) end,
-	infusion = function(self, t) return DamageType.LIGHT_BLIND, "blinding light" end
+	infusion = function(self, t) return DamageType.LIGHT_BLIND, "blinding_light" end
 	sustain_slots = 'alchemy_infusion',
 	is_infusion = true,
 	activate = function(self, t)
