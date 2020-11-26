@@ -124,6 +124,61 @@ newTalent[
 
 ]
 
+newTalent{
+	name = "Spikeskin",
+	type = {"race/drem", 2},
+	require = racial_req2,
+	points = 5,
+	mode = "passive",
+	getDamage = function(self, t) return self:combatStatScale("mag", 40, 150) / 5 end,
+	getNb = function(self, t) return math.floor(self:getTalentLevel(t)) end,
+	callbackOnMeleeHit = function(self, t, src, dam)
+		if self.turn_procs.spikeskin or src:hasEffect(src.EFF_SPIKESKIN_BLACK_BLOOD) then return end
+		self.turn_procs.spikeskin = true
+		src:setEffect(src.EFF_SPIKESKIN_BLACK_BLOOD, 5, {src=self, power=t.getDamage(self, t)})
+	end,
+	callbackOnActBase = function(self, t)
+		local nb_foes = 0
+		for i = 1, #self.fov.actors_dist do
+			local act = self.fov.actors_dist[i]
+			if act and self:canSee(act) and act:hasEffect(act.EFF_SPIKESKIN_BLACK_BLOOD) and core.fov.distance(self.x, self.y, act.x, act.y) <= 2 then nb_foes = nb_foes + 1 end
+		end
+		if nb_foes >= 1 then
+			nb_foes = math.min(nb_foes, t.getNb(self, t))
+			self:setEffect(self.EFF_SPIKESKIN, 2, {power=nb_foes * 5})
+		end
+	end,
+	info = function(self, t)
+		return ([[Your skin grows small spikes coated in dark blight.
+		When you are hit in melee the attacker starts bleeding black blood for 5 turns that deals %0.2f darkness damage each turn. This effect may only happen once per turn.
+		You are empowered by the sight of the black blood, for each bleeding creature in radius 2 you gain 5%% all resistances, limited to %d creatures.
+		The damage will scale with your Magic stat.]]):
+		tformat(damDesc(self, DamageType.DARKNESS, t.getDamage(self, t)), t.getNb(self, t))
+	end,
+}
+
+
+[[damage type is entirely just from changing the effect to Cut instead of black blood (might need to change parameters to suit, but otherwise)
+[8:40 PM]
+and remove the 
+        if nb_foes >= 1 then
+            nb_foes = math.min(nb_foes, t.getNb(self, t))
+            self:setEffect(self.EFF_SPIKESKIN, 2, {power=nb_foes * 5})
+        end
+[8:40 PM]
+then you're good.
+
+callbackOnMeleeHit = function(self, t, src, dam)
+    if src:canBe('cut') then
+        src:setEffect(src.EFF_CUT, 5, {power=t.getDamage(self, t)})
+end,
+
+callbackOnMeleeHit = function(self, t, src, dam)
+    if src:canBe('cut') and src.turn_procs.bledthistrn = true then
+    src.turn_procs.bledthistrn = true   
+    src:setEffect(src.EFF_CUT, 5, {power=t.getDamage(self, t)})
+end,]]
+
 -- Carbon spikes
 newTalent{
     name = "Carbon Spikes",
