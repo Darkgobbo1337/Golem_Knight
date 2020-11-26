@@ -45,6 +45,45 @@ newTalent{
                 
 
 newTalent{
+	name = "Gem Boulder",
+	type = {"spell/steel-alchemy", 2},
+	points = 5,
+	mana = 30,
+	cooldown = 12,
+	range = function(self, t) return math.floor(self:combatTalentScale(t, 3, 8, 0.5, 0, 0, true)) end,
+	radius = 1
+	direct_hit = true
+	tactical = { DISABLE = { knockback = 3 }, ATTACKAREA = {PHYSICAL = 2 }, ESCAPE = { knockback = 2 } },
+	requires_target = true,
+	target = function(self, t)
+		return {type="ball", range=self:getTalentRange(t), radius=self:getTalentRadius(t), talent=t}
+	end,
+	--Calculate damage from Infusion and Alchemist Gems
+	computeDamage = function(self, t, ammo)
+		local inc_dam = 0
+		local damtype = DamageType.PHYSICAL
+		local particle = "ball_physical"
+			for tid, act in pairs(target.sustain_talents) do
+				local tt = self:getTalentFromId(tid)
+					if tt.infusion then damtype, particle = tt.infusion(self, tt) end
+			end
+		inc_dam = inc_dam + (ammo.alchemist_bomb and ammo.alchemist_bomb.power or 0) / 100
+		local dam = self:combatTalentPhysicalDamage(t, 15, 150, ((ammo.alchemist_power or 0) + self:combatPhysicalpower()) / 2)
+		dam = dam * (1 + inc_dam)
+		return dam, damtype, particle
+	end,
+	getDist = function(self, t) return math.floor(self:combatTalentScale(t, 4, 8)) end,
+	
+	Use Speed: Spell
+	You imbue a gem and throw it at your foe and it grows in flight to the size of a boulder. It deals (125-300) Infusion damage to the target and in a radius of 1 around the target. Targets hit by the boulder have a chance to be knocked back(3-9).
+	The damage increases with Strength and quality of the gems used.
+	info = function(self, t)
+		return ([[Throw a huge boulder, dealing %0.2f physical damage and knocking targets back %d tiles within radius %d.
+		The damage will increase with your Strength.]]):tformat(damDesc(self, DamageType.PHYSICAL, t.getDam(self, t)), t.getDist(self, t), self:getTalentRadius(t))
+	end,
+}
+
+newTalent{
 	name = "Throw Boulder",
 	type = {"wild-gift/other", },
 	points = 5,
@@ -65,8 +104,8 @@ newTalent{
 		local x, y = self:getTarget(tg)
 		if not x or not y then return nil end
 		local target = game.level.map(x, y, engine.Map.ACTOR) or self.ai_target.actor or {name=_t"something"}
-		self:logCombat(target, "#Source# hurls a huge boulder at #target#!")
-		self:project(tg, x, y, DamageType.PHYSKNOCKBACK, {dist=t.getDist(self, t), dam=self:mindCrit(t.getDam(self, t))}, {type="archery"})
+		self:logCombat(target, "#Source# hurls a gem boulder at #target#!")
+		self:project(tg, x, y, dam, {dist=t.getDist(self, t), dam=self:physCrit(t.getDam(self, t))}, {type="archery"})
 		game:playSoundNear(self, "talents/ice")
 		return true
 	end,
@@ -75,29 +114,6 @@ newTalent{
 		The damage will increase with your Strength.]]):tformat(damDesc(self, DamageType.PHYSICAL, t.getDam(self, t)), t.getDist(self, t), self:getTalentRadius(t))
 	end,
 }
-
-newTalent{
-	name = "Gem Boulder",
-	type = {"spell/steel-alchemy", 2},
-	points = 5,
-	mana = 30,
-	gem
-	Gem Cost: 1
-	Range: 3-8
-	Cooldown = 12,
-	Use Speed: Spell
-	You imbue a gem and throw it at your foe and it grows in flight to the size of a boulder. It deals (125-300) Infusion damage to the target and in a radius of 1 around the target. Targets hit by the boulder have a chance to be knocked back(3-9).
-	The damage increases with Strength and quality of the gems used.
-	info = function(self, t)
-		return ([[Throw a huge boulder, dealing %0.2f physical damage and knocking targets back %d tiles within radius %d.
-		The damage will increase with your Strength.]]):tformat(damDesc(self, DamageType.PHYSICAL, t.getDam(self, t)), t.getDist(self, t), self:getTalentRadius(t))
-	end,
-}
-
-You imbue a gem and throw it at your foe and it grows in flight to the size of a boulder. It deals (125-300) Infusion damage to the target and in a radius of 1 around the target. Targets hit by the boulder have a chance to be knocked back(3-9).
-	The damage increases with Strength and quality of the gems used.
-
-
 
 newTalent[ 
 	name = "Thorn Spikes",
