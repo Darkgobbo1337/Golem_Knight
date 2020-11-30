@@ -9,7 +9,7 @@ newTalent{
 	tactical = { BUFF = 2 },
 	getIncrease = function(self, t) return self:combatTalentScale(t, 0.05, 0.25) * 100 end,
     	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 15, 30) end,
-	infusion = function(self, t) return DamageType.PHYS_OFF, "physical_offbalance" end
+	infusion = function(self, t) return DamageType.PHYS_OFF, "ball_physical" end
 	sustain_slots = 'alchemy_infusion',
 	is_infusion = true,
 	activate = function(self, t)
@@ -73,6 +73,16 @@ newTalent{
 		return dam, damtype, particle
 	end,
 	getDist = function(self, t) return math.floor(self:combatTalentScale(t, 4, 8)) end,
+	tactical = { DISABLE = { knockback = 3 }, ATTACKAREA = {PHYSICAL = 2 }, ESCAPE = { knockback = 2 } },
+	tactical = { DISABLE = { knockback = 3 }, ESCAPE = { knockback = 2 }, 
+		{ ATTACKAREA = function(self, t, target)
+        		if self:isTalentActive(self.T_DISEASE_INFUSION) then return { BLIGHT = 2 }
+        		elseif self:isTalentActive(self.T_CHRONO_INFUSION) then return { TEMPORAL = 2 }
+        		elseif self:isTalentActive(self.T_FORBIDDEN_INFUSION) then return { DARKNESS = 2 }
+        		elseif self:isTalentActive(self.T_CELESTIAL_INFUSION) then return { LIGHT = 2 }
+    			else return { PHYSICAL = 2 }
+        	end
+    	end },
 	
 	Use Speed: Spell
 	You imbue a gem and throw it at your foe and it grows in flight to the size of a boulder. It deals (125-300) Infusion damage to the target and in a radius of 1 around the target. Targets hit by the boulder have a chance to be knocked back(3-9).
