@@ -9,7 +9,7 @@ newTalent{
 	tactical = { BUFF = 2 },
 	getIncrease = function(self, t) return self:combatTalentScale(t, 0.05, 0.25) * 100 end,
     	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 15, 30) end,
-	infusion = function(self, t) return DamageType.PHYS_OFF, "ball_physical" end
+	infusion = function(self, t) return DamageType.PHYS_OFF end,
 	sustain_slots = 'alchemy_infusion',
 	is_infusion = true,
 	activate = function(self, t)
@@ -32,13 +32,11 @@ newTalent{
 		return true
 	end,
 	info = function(self, t)
-		local daminc = t.getIncrease(self, t)
-        	local pen = t.getResistPenalty(self, t)
 		return ([[When you use your abilities, you infuse them with physical damage that throws your foe off-balance.
                 You increase your Physical damage by %d%%. At rank 3 and higher you increase your Physical resistance penetration by %d%%.
                 You cannot have more than one alchemist infusion sustain active at once. 
                 Switching to another infusion is instant but puts the others on a short 3 turn cooldown.]]):
-		tformat(daminc,pen)
+		tformat(t.getIncrease(self,t), t.getResistPenalty(self,t))
 	end,
 }
 
@@ -53,7 +51,6 @@ newTalent{
 	range = function(self, t) return math.floor(self:combatTalentScale(t, 3, 8, 0.5, 0, 0, true)) end,
 	radius = 1
 	direct_hit = true
-	tactical = { DISABLE = { knockback = 3 }, ATTACKAREA = {PHYSICAL = 2 }, ESCAPE = { knockback = 2 } },
 	requires_target = true,
 	target = function(self, t)
 		return {type="ball", range=self:getTalentRange(t), radius=self:getTalentRadius(t), talent=t}
@@ -72,8 +69,20 @@ newTalent{
 		dam = dam * (1 + inc_dam)
 		return dam, damtype, particle
 	end,
+	--knockback calculation
 	getDist = function(self, t) return math.floor(self:combatTalentScale(t, 4, 8)) end,
-	tactical = { DISABLE = { knockback = 3 }, ATTACKAREA = {PHYSICAL = 2 }, ESCAPE = { knockback = 2 } },
+	--apply damage
+	action = function(self, t)
+		local tg = self:getTalentTarget(t)
+		local x, y = self:getTarget(tg)
+		if not x or not y then return nil end
+		local target = game.level.map(x, y, engine.Map.ACTOR) or self.ai_target.actor or {name=_t"something"}
+		self:logCombat(target, "#Source# hurls a gem boulder at #target#!")
+		self:project(tg, x, y, dam, {dist=t.getDist(self, t), dam=self:physCrit(t.getDam(self, t))}, {type="archery"})
+		game:playSoundNear(self, "talents/ice")
+		return true
+	end,
+	--tactical ai infomation
 	tactical = { DISABLE = { knockback = 3 }, ESCAPE = { knockback = 2 }, 
 		{ ATTACKAREA = function(self, t, target)
         		if self:isTalentActive(self.T_DISEASE_INFUSION) then return { BLIGHT = 2 }
@@ -83,13 +92,10 @@ newTalent{
     			else return { PHYSICAL = 2 }
         	end
     	end },
-	
-	Use Speed: Spell
-	You imbue a gem and throw it at your foe and it grows in flight to the size of a boulder. It deals (125-300) Infusion damage to the target and in a radius of 1 around the target. Targets hit by the boulder have a chance to be knocked back(3-9).
-	The damage increases with Strength and quality of the gems used.
 	info = function(self, t)
-		return ([[Throw a huge boulder, dealing %0.2f physical damage and knocking targets back %d tiles within radius %d.
-		The damage will increase with your Strength.]]):tformat(damDesc(self, DamageType.PHYSICAL, t.getDam(self, t)), t.getDist(self, t), self:getTalentRadius(t))
+		return ([[You imbue a gem and throw it at your foe and it grows in flight to the size of a boulder. It deals %0.2f Infusion damage to the target and in a radius of %d around the target. Targets hit by the boulder have a chance to be knocked back(3-9).
+		The damage increases with Strength and quality of the gems used.]]):
+		tformat(damDesc(self, DamageType.PHYSICAL, t.getDam(self, t)), t.getDist(self, t), self:getTalentRadius(t))
 	end,
 }
 
