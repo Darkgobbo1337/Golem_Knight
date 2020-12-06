@@ -5,7 +5,7 @@ newTalent{
 	require = spells_req1,
 	sustain_mana = 20,
 	points = 5,
-	cooldown = 8,
+	cooldown = 6,
 	tactical = { BUFF = 2 },
 	getIncrease = function(self, t) return self:combatTalentScale(t, 0.05, 0.25) * 100 end,
     	getResistPenalty = function(self, t) return self:combatTalentLimit(t, 40, 15, 30) end,
@@ -20,13 +20,6 @@ newTalent{
         		self:talentTemporaryValue(ret, "resists_pen", {[DamageType.PHYSICAL] = t.getResistPenalty(self, t)})
 		end
 		return ret
-		local function activate_infusion(self, btid)
-			for tid, lev in pairs(self.talents) do
-				if tid ~= btid and self.talents_def[tid].is_infusion and (not self.talents_cd[tid] or self.talents_cd[tid] < 3) then 
-					self.talents_cd[tid] = 3
-				end
-			end
-		end
 	end,
 	deactivate = function(self, t, p)
 		return true
