@@ -38,7 +38,7 @@ newTalent{
 newTalent{
 	name = "Gem Boulder",
 	type = {"spell/steel-alchemy", 2},
-	require = spells_req1,
+	require = spells_req2,
 	points = 5,
 	mana = 30,
 	cooldown = 12,
